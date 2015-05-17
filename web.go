@@ -20,9 +20,21 @@ import (
 	"time"
 )
 
+func serveSingle(pattern string, filename string) {
+	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filename)
+	})
+}
+
 func main() {
 	r := mux.NewRouter().StrictSlash(false)
 	r.HandleFunc("/", HomeHandler)
+	//serveSingle("/", "./static/index.html")
+
+	// Normal resources
+	//	http.Handle("/static", http.FileServer(http.Dir("./static/")))
+	//	r.PathPrefix("/static/").Handler(http.FileServer(http.Dir("./static/")))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
 	// Posts singular
 	// Get a JSON output of the bus times
