@@ -33,7 +33,9 @@ func main() {
 	PebbleBusTimes.Methods("GET").HandlerFunc(PebbleJsonGetHandler)
 
 	fmt.Println("Starting server on :8080")
-	http.ListenAndServe(":8080", r)
+
+	bind := fmt.Sprintf("%s:%s", os.Getenv("HOST"), os.Getenv("PORT"))
+	http.ListenAndServe(bind, r)
 }
 
 func HomeHandler(rw http.ResponseWriter, r *http.Request) {
