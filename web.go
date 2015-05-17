@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -85,8 +86,10 @@ func NextBusAt(bus string, stop string) *SoapOcTranspoEnvelope {
 
 	// Get our credentials
 	proctime := time.Now()
-	credentials, _ := ioutil.ReadFile("./OC_TRANSPO_CREDENTIALS")
-	cred := UnmarshalCredentials(credentials)
+	cred := OCT_credentials{
+		ID:  os.Getenv("OCTID"),
+		KEY: os.Getenv("OCTKEY"),
+	}
 
 	//DEBUG
 	//xml_string, _ := ioutil.ReadFile("nexttrip.xml")
@@ -116,16 +119,6 @@ func NextBusAt(bus string, stop string) *SoapOcTranspoEnvelope {
 
 	return contents
 
-}
-
-func UnmarshalCredentials(raw []byte) OCT_credentials {
-	var cred OCT_credentials
-	json.Unmarshal(raw, &cred)
-
-	//	fmt.Println("%#v", cred)
-	//	fmt.Println("APP ID: ", cred.ID)
-	//	fmt.Println("APP KEY: ", cred.KEY)
-	return cred
 }
 
 /* Credentials JSON Struct */
