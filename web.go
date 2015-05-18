@@ -13,6 +13,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/gorilla/mux"
+	//"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -29,11 +30,8 @@ func serveSingle(pattern string, filename string) {
 func main() {
 	r := mux.NewRouter().StrictSlash(false)
 	r.HandleFunc("/", HomeHandler)
-	//serveSingle("/", "./static/index.html")
 
 	// Normal resources
-	//	http.Handle("/static", http.FileServer(http.Dir("./static/")))
-	//	r.PathPrefix("/static/").Handler(http.FileServer(http.Dir("./static/")))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
 	// Posts singular
@@ -51,8 +49,11 @@ func main() {
 }
 
 func HomeHandler(rw http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(rw, "Home")
+	tmp, _ := ioutil.ReadFile("./static/index.html")
+	tmpl := string(tmp)
+	fmt.Fprintln(rw, tmpl)
 }
+
 func PebbleJsonGetHandler(rw http.ResponseWriter, r *http.Request) {
 	bus := mux.Vars(r)["busno"]
 	stop := mux.Vars(r)["stopno"]
