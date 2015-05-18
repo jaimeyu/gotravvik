@@ -13,7 +13,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/gorilla/mux"
-	//"html/template"
+	//	"github.com/gorilla/schema"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -30,6 +31,11 @@ func serveSingle(pattern string, filename string) {
 func main() {
 	r := mux.NewRouter().StrictSlash(false)
 	r.HandleFunc("/", HomeHandler)
+
+	//	r.HandleFunc("/bus", HomeHandler)
+	//	r.HandleFunc("/bus/{bus}/{route}", HomeHandler)
+	NextBus := r.PathPrefix("/bus").Subrouter()
+	NextBus.Methods("GET").HandlerFunc(HomeHandler)
 
 	// Normal resources
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
@@ -49,9 +55,101 @@ func main() {
 }
 
 func HomeHandler(rw http.ResponseWriter, r *http.Request) {
-	tmp, _ := ioutil.ReadFile("./static/index.html")
+	/*tmp, _ := ioutil.ReadFile("./static/index.html")
 	tmpl := string(tmp)
-	fmt.Fprintln(rw, tmpl)
+
+	type BusReqFrom struct {
+		BusNo  string `schema:"BusNo"`
+		StopNo string `schema:"StopNo"`
+	}
+	*/
+	err := r.ParseForm()
+
+	if err != nil {
+		// Handle error
+	}
+	/*
+		decoder := schema.NewDecoder()
+		// r.PostForm is a map of our POST form values
+		form := new(BusReqFrom)
+		err = decoder.Decode(form, r.PostForm)
+
+		if err != nil {
+			// Handle error
+		}
+
+		// Do something with person.Name or person.Phone
+		fmt.Println("Getting:", form.BusNo, form.StopNo)
+		fmt.Println("Getting:", r.Form["BusNo"][0], r.Form["StopNo"][0])
+		fmt.Println(r.Form) // print information on server side.
+	*/
+	fmt.Println(r.Form) // print information on server side.
+	bus := r.Form["BusNo"][0]
+	stop := r.Form["StopNo"][0]
+
+	data := NextBusAt(bus, stop)
+
+	type DispTrip struct {
+		Type      string
+		Label     string
+		Dst       string
+		Eta       string
+		GpsStatus string
+		GpsLat    string
+		GpsLong   string
+		Speed     string
+	}
+
+	type NextTrips struct {
+		BusNo  string
+		StopNo string
+		Trips  []*DispTrip
+	}
+
+	lsTrips := []*DispTrip{}
+	//fmt.Println("RAW DATA:", data)
+	for route := range data.Body.Response.Result.Route.RouteDirection {
+		for trip := range data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip {
+			// Create trips and append to trips[]
+			cur_trip := DispTrip{}
+			cur_trip.Label = data.Body.Response.Result.Route.RouteDirection[route].RouteNo
+			cur_trip.Type = data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip[trip].BusType
+			fmt.Println("DBG:", data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip[trip].TripDestination)
+			cur_trip.Dst = data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip[trip].TripDestination
+			cur_trip.Speed = data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip[trip].GPSSpeed
+			cur_trip.GpsLat = data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip[trip].Latitude
+			cur_trip.GpsLong = data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip[trip].Longitude
+			cur_trip.Eta = data.Body.Response.Result.Route.RouteDirection[route].Trips.Trip[trip].TripAdjustedScheduleTime
+			lsTrips = append(lsTrips, &cur_trip)
+
+		}
+	}
+
+	trips := NextTrips{}
+	trips.Trips = lsTrips
+	trips.BusNo = bus
+	trips.StopNo = stop
+
+	/*fmt.Fprintln(rw, "DBGHBus triupos:", lsTrips)
+	fmt.Fprintln(rw, "DBGHBus label:", len(trips.Trips))
+	for i := range trips.Trips {
+			fmt.Fprintln(rw, "Bus label:", trips.Trips[i].Dst)
+	}
+	ct := trips.Trips[0]
+	*/
+	index, _ := ioutil.ReadFile("./static/index.html")
+	t := template.New("NextTrips template")
+	t, err = t.Parse(string(index))
+	//t, err = t.ParseFiles("./static/index.html")
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+		os.Exit(1)
+	}
+
+	t.Execute(rw, trips)
+	//fmt.Fprintln(rw, ct)
+
+	//fmt.Fprintln(rw, t)
 }
 
 func PebbleJsonGetHandler(rw http.ResponseWriter, r *http.Request) {
@@ -120,10 +218,9 @@ func NextBusAt(bus string, stop string) *SoapOcTranspoEnvelope {
 	// Pull the data out of the response
 	defer soapresp.Body.Close()
 	body, _ := ioutil.ReadAll(soapresp.Body)
-	fmt.Println("From OC: %s", string(body))
+	fmt.Println("From OC RAW XML: %s", string(body))
 
 	// OC transpo unmarshal test
-	//data := Unmarshal_Soap_OC_Transpo([]byte(body))
 
 	endproctime := time.Now()
 	end := endproctime.Sub(proctime)
@@ -190,9 +287,9 @@ type Trip struct {
 	XMLName                  xml.Name
 	TripDestination          string `xml:"TripDestination"`
 	TripStartTime            string `xml:"TripStartTime"`
-	TripAdjustedScheduleTime string `xml:"TripAdjustedScheduleTime"`
-	TripAdjustmentAge        string `xml:"TripAdjustmentAge"`
-	TripLastTripOfSchedule   string `xml:"TripLastTripOfSchedule"`
+	TripAdjustedScheduleTime string `xml:"AdjustedScheduleTime"`
+	TripAdjustmentAge        string `xml:"djustmentAge"`
+	TripLastTripOfSchedule   string `xml:"LastTripOfSchedule"`
 	BusType                  string `xml:"BusType"`
 	Latitude                 string `xml:"Latitude"`
 	Longitude                string `xml:"Longitude"`
@@ -202,9 +299,7 @@ type Trip struct {
 func Unmarshal_Soap_OC_Transpo(contents *SoapOcTranspoEnvelope) {
 
 	fmt.Println("!!!!!!!!!DEBUG")
-	fmt.Println("BODY:%#v", contents.Body.Response)
-	fmt.Println("Result:%#v", contents.Body.Response.Result)
-	fmt.Println("Route:%#v", contents.Body.Response.Result.Route)
+	//fmt.Println("RAW DATA:", contents)
 	fmt.Println("!!!!!!!!!DEBUG")
 
 	fmt.Println(contents.Body.Response.Result.StopNo)

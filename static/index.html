@@ -7,13 +7,13 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-	<!--link rel="stylesheet/less" href="static/less/bootstrap.less" type="text/css" /-->
-	<!--link rel="stylesheet/less" href="static/less/responsive.less" type="text/css" /-->
+	<!--link rel="stylesheet/less" href="/static/less/bootstrap.less" type="text/css" /-->
+	<!--link rel="stylesheet/less" href="/static/less/responsive.less" type="text/css" /-->
 	<!--script src="js/less-1.3.3.min.js"></script-->
 	<!--append ‘#!watch’ to the browser URL, then refresh the page. -->
 	
-	<link href="static/css/bootstrap.min.css" rel="stylesheet">
-	<link href="static/css/style.css" rel="stylesheet">
+	<link href="/static/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/static/css/style.css" rel="stylesheet">
 
   <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
   <!--[if lt IE 9]>
@@ -21,28 +21,28 @@
   <![endif]-->
 
   <!-- Fav and touch icons -->
-  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="static/img/apple-touch-icon-144-precomposed.png">
-  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="static/img/apple-touch-icon-114-precomposed.png">
-  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="static/img/apple-touch-icon-72-precomposed.png">
-  <link rel="apple-touch-icon-precomposed" href="static/img/apple-touch-icon-57-precomposed.png">
-  <link rel="shortcut icon" href="static/img/favicon.png">
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/static/img/apple-touch-icon-144-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/static/img/apple-touch-icon-114-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/static/img/apple-touch-icon-72-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" href="/static/img/apple-touch-icon-57-precomposed.png">
+  <link rel="shortcut icon" href="/static/img/favicon.png">
   
-	<script type="text/javascript" src="static/js/jquery.min.js"></script>
-	<script type="text/javascript" src="static/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="static/js/scripts.js"></script>
+	<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+	<script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/static/js/scripts.js"></script>
 </head>
 
 <body>
-    <a href="static/index.html" id="logo"><img src="static/img/travvik-logo.png"></a>
+    <a href="/" id="logo"><img src="/static/img/travvik-logo.png"></a>
 <div class="container">
 	<div class="row clearfix">
 		<div class="col-md-12 column">
-			<form role="form" class="form-inline">
+			<form role="form" class="form-inline" action="/bus" method="GET">
 				<div class="form-group">
-					 <label for="exampleInputEmail1">Bus route number</label><input type="number" class="form-control" id="exampleInputEmail1">
+					 <label for="exampleInputEmail1">Bus route number</label><input name="BusNo" type="text" class="form-control" id="busno">
 				</div>
 				<div class="form-group">
-					 <label for="exampleInputPassword1">Bus Stop number</label><input type="number" class="form-control" id="exampleInputPassword1">
+					 <label for="exampleInputPassword1">Bus Stop number</label><input name="StopNo" type="text" class="form-control" id="stopno">
                     
 				</div> 
                 <div class="form-group">
@@ -81,16 +81,24 @@
 		<div class="col-md-8 column">
 			<div class="panel-group" id="panel-697160">
 				<div class="panel panel-default">
-					<div class="panel-heading">
-						 <a class="panel-title" data-toggle="collapse" data-parent="#panel-697160" href="#panel-element-915069">Collapsible Group Item #1</a>
+
+                    <!-- TRIPS -->
+                    {{with .Trips}}
+                            {{range .}}
+				<div class="panel-heading">
+						 <a class="panel-title" data-toggle="collapse" data-parent="#panel-697160" href="#panel-element-915069">
+                            Estimated time of arrival of the {{.Type}} bus heading for {{.Dst}} is in <b>{{.Eta}}</b> minutes.
+                            </a>
 					</div>
 					<div id="panel-element-915069" class="panel-collapse collapse-in">
 						<div class="panel-body">
-							First Bus times
+                            Currently @ {{.GpsLat}},{{.GpsLong}} going at {{$.Speed}}.<br/>
 						</div>
 					</div>
 				</div>
-
+                    {{end}}
+                {{end}}
+	
                 <!--
 				<div class="panel panel-default">
 					<div class="panel-heading">
